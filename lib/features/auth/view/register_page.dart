@@ -1,18 +1,20 @@
-import 'package:bcc_rsi/features/auth/view/register_page.dart';
+import 'package:bcc_rsi/features/auth/view/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_font_weight.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
+  final _nameController = TextEditingController();
+  final _rePasswordController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -24,7 +26,6 @@ class _LoginPageState extends State<LoginPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isDesktop = constraints.maxWidth > 900;
-
           return Row(
             children: [
               if (isDesktop)
@@ -106,23 +107,14 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             const Text(
-                              'Welcome back to',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'BCC Software House',
+                              'Create Your Account',
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: AppFontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             RichText(
                               text: const TextSpan(
                                 style: TextStyle(
@@ -130,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                                   color: Colors.grey,
                                 ),
                                 children: [
-                                  TextSpan(text: 'Sign in to '),
+                                  TextSpan(text: 'Join us to '),
                                   TextSpan(
                                     text: 'continue',
                                     style: TextStyle(
@@ -143,6 +135,32 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 40),
+                            const Text(
+                              'Full Name',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                hintText: '',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
                             const Text(
                               'Email Address',
                               style: TextStyle(
@@ -166,14 +184,6 @@ class _LoginPageState extends State<LoginPage> {
                                   horizontal: 20,
                                   vertical: 16,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Use your registered email domain.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -216,29 +226,45 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Confirm Password',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
                             const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Input your password correctly.',
-                                  style: TextStyle(
-                                    fontSize: 12,
+                            TextField(
+                              controller: _rePasswordController,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                hintText: '',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
                                     color: Colors.grey,
                                   ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
                                 ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: const Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                             const SizedBox(height: 32),
                             ElevatedButton(
@@ -252,7 +278,7 @@ class _LoginPageState extends State<LoginPage> {
                                 elevation: 0,
                               ),
                               child: const Text(
-                                'Login',
+                                'Register',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -296,20 +322,19 @@ class _LoginPageState extends State<LoginPage> {
                                     color: Colors.grey,
                                   ),
                                   children: [
-                                    const TextSpan(text: "Don't have "),
+                                    const TextSpan(text: "Already have an "),
                                     WidgetSpan(
                                       child: GestureDetector(
                                         onTap: () {
                                           Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                const RegisterPage(),
-                                              )
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const LoginPage(),
+                                            ),
                                           );
                                         },
                                         child: const Text(
-                                          'the account yet?',
+                                          'Account?',
                                           style: TextStyle(
                                             color: Color(0xFF00BCD4),
                                             fontWeight: FontWeight.w600,
