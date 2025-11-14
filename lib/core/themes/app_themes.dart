@@ -16,14 +16,8 @@ class AppTheme {
       secondary: secondaryColor,
     ),
     textTheme: GoogleFonts.poppinsTextTheme(
-      const TextTheme(
-        bodyMedium: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
-        ),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
+      ThemeData.light().textTheme,
+    ).copyWith(),    inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(
