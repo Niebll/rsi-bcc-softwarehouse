@@ -17,27 +17,32 @@ class ProjectRequestPage extends StatefulWidget {
 }
 
 class _ProjectRequestPageState extends State<ProjectRequestPage> {
+  // Menyimpan list data request project yang diterima dari API
   List<Map<String, dynamic>> _data = [];
+
+  // State loading untuk tabel dan statistik
   bool _isLoading = false;
   bool _isStatsLoading = true;
 
+  // Tab filter index (0 = Semua)
   int currentTabIndex = 0;
 
-  // REAL COUNT
+  // ===== REAL COUNT STATISTICS =====
   int totalCount = 0;
   int approvedCount = 0;
   int rejectedCount = 0;
   int pendingCount = 0;
 
+  // Base URL API
   final String baseUrl = "https://pg-vincent.bccdev.id/rsi/";
 
   @override
   void initState() {
     super.initState();
-    fetchProjectRequest();
+    fetchProjectRequest(); // Load data pertama kali
   }
 
-  // ================= GET =================
+  // ================= GET DATA FROM API =================
   Future<void> fetchProjectRequest() async {
     setState(() {
       _isLoading = true;
@@ -50,26 +55,28 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
+
+        // Ambil rows
         final rows = body["data"]["rows"] as List;
 
+        // Mapping data untuk dipakai table
         _data = rows.map((e) {
           return {
             "id": e["requestId"],
             "project": e["projectName"],
             "client": e["clientName"],
-            "deadline": DateFormat('yyyy-MM-dd')
-                .format(DateTime.parse(e["deadline"])),
+            "deadline": DateFormat('yyyy-MM-dd').format(
+              DateTime.parse(e["deadline"]),
+            ),
             "budget": e["budget"],
-            "status": _normalizeStatus(e["status"]),
+            "status": _normalizeStatus(e["status"]), // Normalisasi status
           };
         }).toList();
 
-        // HITUNG STATISTIK
+        // Hitung statistik
         totalCount = _data.length;
-        approvedCount =
-            _data.where((e) => e['status'] == 'Approved').length;
-        rejectedCount =
-            _data.where((e) => e['status'] == 'Rejected').length;
+        approvedCount = _data.where((e) => e['status'] == 'Approved').length;
+        rejectedCount = _data.where((e) => e['status'] == 'Rejected').length;
         pendingCount =
             _data.where((e) => e['status'] == 'Pending Review').length;
       }
@@ -77,12 +84,14 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
       print("Error GET: $e");
     }
 
+    // Stop loading setelah data selesai diproses
     setState(() {
       _isLoading = false;
       _isStatsLoading = false;
     });
   }
 
+  // Normalisasi raw status dari API → format yang dipakai UI
   String _normalizeStatus(String s) {
     switch (s.toLowerCase()) {
       case "pending":
@@ -97,7 +106,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
     }
   }
 
-  // ================= FILTER =================
+  // ================= FILTER DATA SESUAI TAB =================
   List<Map<String, dynamic>> get _filteredData {
     switch (currentTabIndex) {
       case 1:
@@ -107,7 +116,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
       case 3:
         return _data.where((e) => e['status'] == 'Approved').toList();
       default:
-        return _data;
+        return _data; // Semua data
     }
   }
 
@@ -119,7 +128,10 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
       backgroundColor: Colors.white,
       body: Row(
         children: [
+          // Sidebar
           SideDashboard(selectedIndex: 0, onItemSelected: (value) {}),
+
+          // Konten utama
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 48.w),
@@ -131,6 +143,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                   // ================== STATS BOX ==================
                   Row(
                     children: [
+                      // Semua
                       _isStatsLoading
                           ? _loadingStatBox()
                           : ProjectRequestBoxStats(
@@ -141,6 +154,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                       ),
                       SizedBox(width: 24.w),
 
+                      // Approved
                       _isStatsLoading
                           ? _loadingStatBox()
                           : ProjectRequestBoxStats(
@@ -151,6 +165,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                       ),
                       SizedBox(width: 24.w),
 
+                      // Rejected
                       _isStatsLoading
                           ? _loadingStatBox()
                           : ProjectRequestBoxStats(
@@ -161,6 +176,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                       ),
                       SizedBox(width: 24.w),
 
+                      // Pending Review
                       _isStatsLoading
                           ? _loadingStatBox()
                           : ProjectRequestBoxStats(
@@ -173,6 +189,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                   ),
                   SizedBox(height: 40.h),
 
+                  // Judul tabel
                   Text(
                     "Riwayat Request",
                     style: textTheme.headlineSmall?.copyWith(
@@ -182,14 +199,17 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
                   ),
                   SizedBox(height: 20.h),
 
+                  // Tab Filter
                   _buildTabFilter(),
                   SizedBox(height: 20.h),
 
+                  // Tabel utama
                   Expanded(
                     child: _isLoading
                         ? Center(child: CircularProgressIndicator())
                         : _buildPaginatedTable(),
                   ),
+
                   SizedBox(height: 30.h),
                 ],
               ),
@@ -200,7 +220,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
     );
   }
 
-  // ================= TAB FILTER =================
+  // ================= TAB FILTER UI =================
   Widget _buildTabFilter() {
     final tabs = ["Semua", "Pending", "Declined", "Approved"];
 
@@ -209,9 +229,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
         bool selected = currentTabIndex == i;
 
         return GestureDetector(
-          onTap: () {
-            setState(() => currentTabIndex = i);
-          },
+          onTap: () => setState(() => currentTabIndex = i),
           child: Container(
             margin: EdgeInsets.only(right: 12.w),
             padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
@@ -233,7 +251,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
     );
   }
 
-  // ================== PAGINATED DATATABLE2 ==================
+  // ================== PAGINATED DATA TABLE ==================
   Widget _buildPaginatedTable() {
     return PaginatedDataTable2(
       columns: const [
@@ -245,28 +263,37 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
         DataColumn(label: Text("Status")),
         DataColumn(label: Text("Actions")),
       ],
-      source: _ProjectRequestTableSource(() => _filteredData, (row) {
-        showGeneralDialog(
-          context: context,
-          barrierDismissible: true,
-          barrierLabel: 'Detail',
-          barrierColor: Colors.black.withOpacity(0.5),
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (context, anim1, anim2) {
-            return ProjectRequestDetail(project: row);
-          },
-          transitionBuilder: (context, anim1, anim2, child) {
-            return FadeTransition(
-              opacity: anim1,
-              child: ScaleTransition(
-                scale: CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-                child: child,
-              ),
-            );
-          },
-        );
 
-      }),
+      // Source data → class di bawah
+      source: _ProjectRequestTableSource(
+            () => _filteredData,
+            (row) {
+          // Open dialog detail
+          showGeneralDialog(
+            context: context,
+            barrierDismissible: true,
+            barrierLabel: 'Detail',
+            barrierColor: Colors.black.withOpacity(0.5),
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, anim1, anim2) {
+              return ProjectRequestDetail(project: row);
+            },
+            transitionBuilder: (context, anim1, anim2, child) {
+              return FadeTransition(
+                opacity: anim1,
+                child: ScaleTransition(
+                  scale: CurvedAnimation(
+                    parent: anim1,
+                    curve: Curves.easeOut,
+                  ),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
       rowsPerPage: 7,
       minWidth: 900,
       headingRowColor: WidgetStateProperty.all(Colors.grey.shade200),
@@ -276,7 +303,7 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
     );
   }
 
-  // ================== SKELETON LOADING BOX ==================
+  // Skeleton loading box untuk statistik
   Widget _loadingStatBox() {
     return Container(
       height: 110.h,
@@ -290,14 +317,13 @@ class _ProjectRequestPageState extends State<ProjectRequestPage> {
 }
 
 //
-// ================= TABLE SOURCE =================
+// ================= TABLE SOURCE (HANDLE RENDERING ROWS) =================
 //
 class _ProjectRequestTableSource extends DataTableSource {
   final List<Map<String, dynamic>> Function() getData;
   final void Function(Map<String, dynamic> row) onDetail;
 
   _ProjectRequestTableSource(this.getData, this.onDetail);
-
 
   @override
   DataRow? getRow(int index) {
@@ -313,15 +339,20 @@ class _ProjectRequestTableSource extends DataTableSource {
       DataCell(Text(e["client"])),
       DataCell(Text(e["deadline"])),
       DataCell(Text("Rp ${e["budget"]}")),
+
+      // Badge status
       DataCell(_statusBadge(e["status"])),
+
+      // Button Detail → hanya muncul untuk Pending Review
       DataCell(
         e["status"] == "Pending Review"
             ? GestureDetector(
-          onTap: () => onDetail(e),    // <- pakai callback
+          onTap: () => onDetail(e),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.blue,
                 borderRadius: BorderRadius.circular(6),
@@ -338,10 +369,10 @@ class _ProjectRequestTableSource extends DataTableSource {
         )
             : const Text("—"),
       ),
-
     ]);
   }
 
+  // Widget badge berdasarkan status
   Widget _statusBadge(String status) {
     Color bg, tx;
 
@@ -355,8 +386,6 @@ class _ProjectRequestTableSource extends DataTableSource {
       bg = Colors.green.withOpacity(0.2);
       tx = Colors.green;
     }
-
-
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

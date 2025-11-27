@@ -16,29 +16,35 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // ================================
+  //      TEXT FIELD CONTROLLER
+  // ================================
   final _nameController = TextEditingController();
   final _rePasswordController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+
+  bool _obscurePassword = true; // untuk toggle visibility password
 
   // ============================
   //       REGISTER FUNCTION
   // ============================
   Future<void> registerUser() async {
 
-    // VALIDATION
+    // ===== VALIDATION INPUT =====
     if (_nameController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty ||
         _rePasswordController.text.trim().isEmpty) {
 
+      // Jika ada field kosong
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("All fields must be filled")),
       );
       return;
     }
 
+    // ===== CEK PASSWORD SAMA =====
     if (_passwordController.text.trim() != _rePasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Password does not match")),
@@ -46,57 +52,73 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    final url = Uri.parse(
-        "https://pg-vincent.bccdev.id/rsi/api/auth/register");
+    // Endpoint register API
+    final url = Uri.parse("https://pg-vincent.bccdev.id/rsi/api/auth/register");
 
+    // Body request untuk API
     final body = {
       "name": _nameController.text.trim(),
       "email": _emailController.text.trim(),
       "password": _passwordController.text.trim(),
-      "phone": "081286863129" // HARD CODE
+      "phone": "081286863129" // MASIH HARDCODE → bisa diganti menjadi input sendiri
     };
 
     try {
+      // ====== REQUEST POST ======
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
       );
+
+      // debug log
       print("Response status: ${response.statusCode}");
       print("Response body: ${response.body}");
+
+      // ====== HANDLE RESPONSE ======
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // sukses
+
+        // Jika berhasil daftar
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Register success!")),
         );
+
+        // Pindah ke halaman request project
         context.go('/requesting');
 
-    } else {
-        // gagal
+      } else {
+        // Jika gagal (misal email sudah digunakan)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Register failed: ${response.body}"),
-          ),
+          SnackBar(content: Text("Register failed: ${response.body}")),
         );
       }
     } catch (e) {
+      // Jika terjadi error lain (network error)
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-        ),
+        SnackBar(content: Text("Error: $e")),
       );
     }
   }
 
+  // ============================
+  //           BUILD UI
+  // ============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
+
+          // Deteksi apakah tampilan desktop atau mobile
           bool isDesktop = constraints.maxWidth > 900;
+
           return Row(
             children: [
+
+              // =======================================
+              //  BAGIAN KIRI (HANYA MUNCUL DI DESKTOP)
+              // =======================================
               if (isDesktop)
                 Expanded(
                   flex: 5,
@@ -111,21 +133,24 @@ class _RegisterPageState extends State<RegisterPage> {
                         ],
                       ),
                     ),
+
+                    // BAGIAN POSTER / BRANDING
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+
+                        // Logo BCC
                         Padding(
                           padding: const EdgeInsets.only(left: 40, top: 40),
                           child: Align(
                             alignment: Alignment.topLeft,
-                            child: Row(
-                              children: [
-                                Image.asset('assets/images/BCC.png', width: 200)
-                              ],
-                            ),
+                            child: Image.asset('assets/images/BCC.png', width: 200),
                           ),
                         ),
+
                         const Spacer(),
+
+                        // Ilustrasi
                         Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Image.asset(
@@ -133,7 +158,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             width: 400,
                           ),
                         ),
+
                         const Spacer(),
+
+                        // Tagline
                         Padding(
                           padding: const EdgeInsets.all(40.0),
                           child: Text(
@@ -150,6 +178,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ),
+
+              // =======================================
+              //          FORM REGISTER (KANAN)
+              // =======================================
               Expanded(
                 flex: isDesktop ? 4 : 1,
                 child: Container(
@@ -160,23 +192,27 @@ class _RegisterPageState extends State<RegisterPage> {
                         horizontal: isDesktop ? 80 : 24,
                         vertical: 40,
                       ),
+
                       child: Container(
                         constraints: const BoxConstraints(maxWidth: 500),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
                           children: [
+
+                            // Logo BCC jika mobile
                             if (!isDesktop)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 40),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset('assets/images/BCC.png',
-                                        width: 200),
-                                  ],
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/images/BCC.png',
+                                    width: 200,
+                                  ),
                                 ),
                               ),
+
+                            // Judul Form
                             const Text(
                               'Create Your Account',
                               style: TextStyle(
@@ -185,13 +221,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
+
                             const SizedBox(height: 8),
+
+                            // Sub-judul
                             RichText(
                               text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.grey),
                                 children: [
                                   TextSpan(text: 'Join us to '),
                                   TextSpan(
@@ -205,9 +241,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ],
                               ),
                             ),
+
                             const SizedBox(height: 40),
 
-                            // NAME
+                            // =======================================
+                            //                FIELD NAMA
+                            // =======================================
                             const Text(
                               'Full Name',
                               style: TextStyle(
@@ -219,23 +258,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _nameController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                hintText: '',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                              ),
+                              decoration: _inputStyle(),
                             ),
                             const SizedBox(height: 24),
 
-                            // EMAIL
+                            // =======================================
+                            //                FIELD EMAIL
+                            // =======================================
                             const Text(
                               'Email Address',
                               style: TextStyle(
@@ -247,23 +276,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _emailController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                hintText: '',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                              ),
+                              decoration: _inputStyle(),
                             ),
                             const SizedBox(height: 24),
 
-                            // PASSWORD
+                            // =======================================
+                            //                FIELD PASSWORD
+                            // =======================================
                             const Text(
                               'Password',
                               style: TextStyle(
@@ -276,36 +295,14 @@ class _RegisterPageState extends State<RegisterPage> {
                             TextField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                hintText: '',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                              ),
+                              decoration: _passwordStyle(),
                             ),
+
                             const SizedBox(height: 24),
 
-                            // CONFIRM PASSWORD
+                            // =======================================
+                            //          FIELD CONFIRM PASSWORD
+                            // =======================================
                             const Text(
                               'Confirm Password',
                               style: TextStyle(
@@ -318,44 +315,19 @@ class _RegisterPageState extends State<RegisterPage> {
                             TextField(
                               controller: _rePasswordController,
                               obscureText: _obscurePassword,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                hintText: '',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                              ),
+                              decoration: _passwordStyle(),
                             ),
+
                             const SizedBox(height: 32),
 
-                            // REGISTER BUTTON
+                            // =======================================
+                            //            BUTTON REGISTER
+                            // =======================================
                             ElevatedButton(
-                              onPressed: () {
-                                registerUser();
-                              },
+                              onPressed: () => registerUser(),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFF7043),
-                                padding:
-                                const EdgeInsets.symmetric(vertical: 18),
+                                padding: const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -373,17 +345,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
                             const SizedBox(height: 32),
 
+                            // =======================================
+                            //                   DIVIDER
+                            // =======================================
                             Row(
                               children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: Colors.grey.shade300,
-                                    thickness: 1,
-                                  ),
-                                ),
+                                Expanded(child: Divider(color: Colors.grey.shade300)),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
                                     'OR',
                                     style: TextStyle(
@@ -392,22 +361,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: Divider(
-                                    color: Colors.grey.shade300,
-                                    thickness: 1,
-                                  ),
-                                ),
+                                Expanded(child: Divider(color: Colors.grey.shade300)),
                               ],
                             ),
+
                             const SizedBox(height: 32),
+
+                            // =======================================
+                            //            BUTTON LOGIN
+                            // =======================================
                             Center(
                               child: RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
+                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                                   children: [
                                     const TextSpan(text: "Already have an "),
                                     WidgetSpan(
@@ -416,8 +382,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) =>
-                                              const LoginPage(),
+                                              builder: (context) => const LoginPage(),
                                             ),
                                           );
                                         },
@@ -449,6 +414,48 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // ================================
+  // STYLING: INPUT FIELD TEMPLATE
+  // ================================
+  InputDecoration _inputStyle() {
+    return InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    );
+  }
+
+  // ================================
+  // STYLING: PASSWORD FIELD
+  // ================================
+  InputDecoration _passwordStyle() {
+    return InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      suffixIcon: IconButton(
+        icon: Icon(
+          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          color: Colors.grey,
+        ),
+        onPressed: () {
+          setState(() {
+            _obscurePassword = !_obscurePassword;
+          });
+        },
+      ),
+    );
+  }
+
+  // Dispose controller untuk menghindari memory leak
   @override
   void dispose() {
     _emailController.dispose();

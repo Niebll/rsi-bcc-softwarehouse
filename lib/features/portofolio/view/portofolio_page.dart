@@ -13,16 +13,26 @@ class PortofolioPage extends StatefulWidget {
 class _PortofolioPageState extends State<PortofolioPage> {
   @override
   Widget build(BuildContext context) {
+    // Mengambil tema teks dari context untuk konsistensi style
     TextTheme textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Row(
         children: [
+          // Sidebar navigasi halaman dashboard
           SideDashboard(selectedIndex: 0, onItemSelected: (value) {}),
+
+          // Area utama konten
           Expanded(
             child: Container(
+              // Margin luar dari container utama
               margin: EdgeInsets.symmetric(horizontal: 100.w, vertical: 66.h),
+
+              // Padding dalam container
               padding: EdgeInsets.all(32.w),
+
+              // Style card container utama
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12.r),
@@ -34,11 +44,14 @@ class _PortofolioPageState extends State<PortofolioPage> {
                   ),
                 ],
               ),
+
+              // LayoutBuilder untuk menyesuaikan layout berdasarkan ukuran
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Title halaman
                       Text(
                         'Portofolio BCC Software House',
                         style: textTheme.headlineMedium?.copyWith(
@@ -46,7 +59,10 @@ class _PortofolioPageState extends State<PortofolioPage> {
                           color: AppColors.textPrimary,
                         ),
                       ),
+
                       SizedBox(height: 24.h),
+
+                      // Baris pertama berisi 3 card portofolio
                       Expanded(
                         child: Row(
                           children: [
@@ -55,11 +71,13 @@ class _PortofolioPageState extends State<PortofolioPage> {
                             Expanded(child: _buildPortoCard(textTheme)),
                             SizedBox(width: 16.w),
                             Expanded(child: _buildPortoCard(textTheme)),
-
                           ],
                         ),
                       ),
+
                       SizedBox(height: 16.h),
+
+                      // Baris kedua berisi 3 card portofolio
                       Expanded(
                         child: Row(
                           children: [
@@ -68,7 +86,6 @@ class _PortofolioPageState extends State<PortofolioPage> {
                             Expanded(child: _buildPortoCard(textTheme)),
                             SizedBox(width: 16.w),
                             Expanded(child: _buildPortoCard(textTheme)),
-
                           ],
                         ),
                       ),
@@ -82,9 +99,13 @@ class _PortofolioPageState extends State<PortofolioPage> {
       ),
     );
   }
+
+  // Widget untuk satu kartu portofolio
   Widget _buildPortoCard(TextTheme textTheme) {
     return ClipRRect(
+      // Membuat sudut kartu membulat
       borderRadius: BorderRadius.circular(12.r),
+
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.background,
@@ -96,9 +117,11 @@ class _PortofolioPageState extends State<PortofolioPage> {
             ),
           ],
         ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Bagian gambar portofolio
             Expanded(
               flex: 7,
               child: Image.asset(
@@ -107,6 +130,8 @@ class _PortofolioPageState extends State<PortofolioPage> {
                 fit: BoxFit.cover,
               ),
             ),
+
+            // Bagian deskripsi portofolio
             Expanded(
               flex: 5,
               child: Padding(
@@ -114,22 +139,26 @@ class _PortofolioPageState extends State<PortofolioPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Judul portofolio
                     Text(
                       "Aplikasi E-Commerce",
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     SizedBox(height: 8.h),
+
+                    // Deskripsi singkat portofolio
                     Expanded(
                       child: Text(
                         "Deskripsi singkat mengenai aplikasi e-commerce yang dikembangkan oleh BCC Software House. Aplikasi ini memiliki fitur lengkap untuk mendukung aktivitas jual beli online.",
                         style: textTheme.bodyMedium?.copyWith(
                           color: AppColors.greyText,
-                          fontSize: 12.sp
+                          fontSize: 12.sp,
                         ),
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
+                        maxLines: 3, // Membatasi deskripsi maksimum 3 baris
                       ),
                     ),
                   ],

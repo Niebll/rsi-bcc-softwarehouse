@@ -7,7 +7,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
-const String BaseUrl = "https://pg-vincent.bccdev.id/rsi/"; // GANTI JIKA PERLU
+// Base URL API utama
+const String BaseUrl = "https://pg-vincent.bccdev.id/rsi/";
 
 class ProjectBillPage extends StatefulWidget {
   const ProjectBillPage({Key? key}) : super(key: key);
@@ -17,25 +18,27 @@ class ProjectBillPage extends StatefulWidget {
 }
 
 class _ProjectBillPageState extends State<ProjectBillPage> {
-  int _selectedIndex = 0;
-  int currentTabIndex = 0;
+  int _selectedIndex = 0;        // index sidebar
+  int currentTabIndex = 0;       // index tab (Pending / Verified / Rejected)
 
+  // Nama tab filter
   final List<String> tabs = [
     "Pending",
     "Verified",
     "Rejected",
   ];
 
-  List<Map<String, dynamic>> _data = [];
+  List<Map<String, dynamic>> _data = []; // data tagihan
 
-  bool isLoading = true;
+  bool isLoading = true; // indikator loading API
 
   @override
   void initState() {
     super.initState();
-    fetchBills();
+    fetchBills(); // mengambil data saat halaman dibuka
   }
 
+  /// Fetch seluruh data pembayaran (payment) dari API
   Future<void> fetchBills() async {
     try {
       final url = Uri.parse("${BaseUrl}api/payment/all");
@@ -46,6 +49,7 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
 
         List rows = jsonData["data"]["rows"];
 
+        // Normalisasi data API ke bentuk Map mudah digunakan UI
         setState(() {
           _data = rows.map((item) {
             final rp = item["RequestProjectDatum"];
@@ -71,6 +75,7 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
     }
   }
 
+  /// Filter data berdasarkan tab
   List<Map<String, dynamic>> get _filteredData {
     switch (currentTabIndex) {
       case 0:
@@ -92,10 +97,13 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
       backgroundColor: AppColors.background,
       body: Row(
         children: [
+          // Sidebar kiri
           SideDashboard(
             selectedIndex: _selectedIndex,
             onItemSelected: (index) => setState(() => _selectedIndex = index),
           ),
+
+          // Bagian kanan (konten utama)
           Expanded(
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 40.w, horizontal: 68.w),
@@ -103,6 +111,7 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
                 children: [
                   SizedBox(height: 24.h),
 
+                  // Jika masih loading → tampilkan spinner
                   if (isLoading)
                     const Expanded(
                       child: Center(
@@ -110,6 +119,7 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
                       ),
                     )
                   else
+                  // Jika data sudah siap
                     Expanded(
                       child: Container(
                         padding: EdgeInsets.all(24.w),
@@ -125,14 +135,18 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
                             ),
                           ],
                         ),
+
+                        // Isi konten
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Judul halaman
                             Text("Tagihan Proyek",
                                 style: textTheme.headlineSmall?.copyWith(
                                     fontWeight: FontWeight.w600)),
                             SizedBox(height: 16.h),
 
+                            // TAB FILTER (Pending, Verified, Rejected)
                             Row(
                               children: List.generate(tabs.length, (index) {
                                 bool isActive = currentTabIndex == index;
@@ -175,6 +189,7 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
 
                             SizedBox(height: 24.h),
 
+                            // TABEL DATA
                             Expanded(
                               child: PaginatedDataTable2(
                                 columnSpacing: 12.w,
@@ -183,6 +198,8 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
                                 headingRowHeight: 56.h,
                                 dataRowHeight: 64.h,
                                 dividerThickness: 0.2,
+
+                                // Header tabel
                                 columns: [
                                   DataColumn2(
                                     label: Text('ID',
@@ -195,15 +212,20 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
                                   DataColumn(label: Text('Nominal')),
                                   DataColumn(label: Text('Lihat Bukti')),
                                   DataColumn(label: Text('Status')),
+
+                                  // Kolom aksi hanya muncul di tab Pending
                                   if (currentTabIndex == 0)
                                     DataColumn(label: Text('Aksi')),
                                 ],
+
+                                // Data source tabel
                                 source: ProjectBillDataSource(
                                   _filteredData,
                                   currentTabIndex,
                                   context,
                                   refreshParent: fetchBills,
                                 ),
+
                                 rowsPerPage: 7,
                                 showCheckboxColumn: false,
                               ),
@@ -222,6 +244,10 @@ class _ProjectBillPageState extends State<ProjectBillPage> {
   }
 }
 
+// =======================================================================
+// DATA SOURCE UNTUK DATATABLE2
+// =======================================================================
+
 class ProjectBillDataSource extends DataTableSource {
   final List<Map<String, dynamic>> _data;
   final int currentTabIndex;
@@ -230,17 +256,19 @@ class ProjectBillDataSource extends DataTableSource {
 
   ProjectBillDataSource(
       this._data,
-      this.currentTabIndex, this.context, {
+      this.currentTabIndex,
+      this.context, {
         required this.refreshParent,
       });
 
+  /// Update status pembayaran (Pending → Verified / Rejected)
   Future<void> updatePaymentStatus(int paymentId, String status) async {
     final url =
     Uri.parse("${BaseUrl}api/payment/update-status/$paymentId");
 
     final body = {
       "status": status,
-      "validatedBy": 1,
+      "validatedBy": 1, // validator admin ID (sementara hardcode)
     };
 
     try {
@@ -263,9 +291,11 @@ class ProjectBillDataSource extends DataTableSource {
   @override
   DataRow? getRow(int index) {
     if (index >= _data.length) return null;
+
     final bill = _data[index];
     final dateFormat = DateFormat('dd MMM yyyy');
 
+    // Warna badge status
     Color statusColor(String status) {
       switch (status) {
         case 'Pending':
@@ -279,6 +309,7 @@ class ProjectBillDataSource extends DataTableSource {
       }
     }
 
+    // Variable supaya dropdown per row bisa berubah
     String selectedStatus = bill['status'];
 
     return DataRow(
@@ -288,6 +319,7 @@ class ProjectBillDataSource extends DataTableSource {
         DataCell(Text(dateFormat.format(bill['jatuhTempo']))),
         DataCell(Text('Rp ${bill['nominal']}')),
 
+        // Tombol untuk melihat gambar bukti transfer
         DataCell(GestureDetector(
           onTap: () {
             final imageUrl = bill['bukti'];
@@ -304,14 +336,10 @@ class ProjectBillDataSource extends DataTableSource {
                   ),
                   child: Container(
                     padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.white,
-                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Close button
+                        // tombol close
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -324,7 +352,7 @@ class ProjectBillDataSource extends DataTableSource {
 
                         SizedBox(height: 10),
 
-                        // IMAGE PREVIEW
+                        // preview gambar
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
@@ -351,6 +379,7 @@ class ProjectBillDataSource extends DataTableSource {
               },
             );
           },
+
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
             decoration: BoxDecoration(
@@ -366,8 +395,11 @@ class ProjectBillDataSource extends DataTableSource {
             ),
           ),
         )),
+
+        // Kolom STATUS
         DataCell(
           currentTabIndex == 0
+          // Jika tab Pending → status bisa diganti via dropdown
               ? StatefulBuilder(
             builder: (context, setRowState) => DropdownButton<String>(
               value: selectedStatus,
@@ -403,6 +435,7 @@ class ProjectBillDataSource extends DataTableSource {
           ),
         ),
 
+        // Tombol SIMPAN hanya muncul jika masih Pending
         if (currentTabIndex == 0)
           DataCell(
             ElevatedButton(
@@ -415,7 +448,7 @@ class ProjectBillDataSource extends DataTableSource {
               ),
               onPressed: () async {
                 await updatePaymentStatus(bill['id'], selectedStatus);
-                refreshParent();
+                refreshParent(); // refresh tabel setelah update
               },
               child: Text(
                 'Simpan',

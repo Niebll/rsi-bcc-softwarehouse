@@ -17,19 +17,24 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Controller untuk mengambil input email & password
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Untuk toggle visibility password
   bool _obscurePassword = true;
+
+  // Indikator loading ketika proses login berlangsung
   bool _isLoading = false;
 
-  // ---------------------------
-  // 🔥 LOGIN FUNCTION
-  // ---------------------------
+  // ---------------------------------------------------------
+  // 🔥 FUNCTION: LOGIN KE API BACKEND
+  // ---------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
+    // Validasi sederhana
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Email dan password tidak boleh kosong")),
@@ -39,9 +44,11 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
 
+    // Endpoint login API
     final url = "https://pg-vincent.bccdev.id/rsi/api/auth/login";
 
     try {
+      // Mengirim request POST berupa email & password
       final res = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
@@ -50,6 +57,7 @@ class _LoginPageState extends State<LoginPage> {
 
       final data = jsonDecode(res.body);
 
+      // Jika status 200 & token tersedia → login sukses
       if (res.statusCode == 200 && data["token"] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data["message"] ?? "Login berhasil")),
@@ -57,13 +65,17 @@ class _LoginPageState extends State<LoginPage> {
 
         print("TOKEN: ${data['token']}");
 
+        // Navigate ke Dashboard
         context.go('/dashboard');
+
       } else {
+        // Jika gagal login
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data["message"] ?? "Login gagal")),
         );
       }
     } catch (e) {
+      // Error network / server
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
@@ -72,19 +84,25 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = false);
   }
 
-  // ---------------------------
-  // UI TETAP — GA DIUBAH
-  // ---------------------------
+  // ---------------------------------------------------------
+  // UI / LAYOUT LOGIN PAGE
+  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // LayoutBuilder → mendeteksi apakah desktop / mobile
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isDesktop = constraints.maxWidth > 900;
 
           return Row(
             children: [
+
+              // -----------------------------------------
+              // 🔵 BAGIAN KIRI (HANYA MUNCUL DI DESKTOP)
+              // -----------------------------------------
               if (isDesktop)
                 Expanded(
                   flex: 5,
@@ -102,6 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Logo BCC
                         Padding(
                           padding: const EdgeInsets.only(left: 40, top: 40),
                           child: Align(
@@ -113,16 +132,21 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
+
                         const Spacer(),
+
+                        // Ilustrasi gambar login
                         Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Image.asset(
                             'assets/images/Login.png',
                             width: 400,
-
                           ),
                         ),
+
                         const Spacer(),
+
+                        // Tagline BCC SH di bagian bawah kiri
                         Padding(
                           padding: const EdgeInsets.all(40.0),
                           child: Text(
@@ -139,22 +163,30 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
+
+              // -----------------------------------------
+              // 🟠 BAGIAN KANAN (FORM LOGIN)
+              // -----------------------------------------
               Expanded(
                 flex: isDesktop ? 4 : 1,
                 child: Container(
                   color: const Color(0xFFF5F5F5),
+
                   child: Center(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
                         horizontal: isDesktop ? 80 : 24,
                         vertical: 40,
                       ),
+
                       child: Container(
                         constraints: const BoxConstraints(maxWidth: 500),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
                           children: [
+
+                            // Logo BCC (hanya muncul di mobile)
                             if (!isDesktop)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 40),
@@ -165,6 +197,8 @@ class _LoginPageState extends State<LoginPage> {
                                   ],
                                 ),
                               ),
+
+                            // Text heading
                             const Text(
                               'Welcome back to',
                               style: TextStyle(
@@ -183,6 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
+
                             RichText(
                               text: const TextSpan(
                                 style: TextStyle(
@@ -202,7 +237,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ],
                               ),
                             ),
+
                             const SizedBox(height: 40),
+
+                            // -----------------------------------------
+                            // 📨 INPUT EMAIL
+                            // -----------------------------------------
                             const Text(
                               'Email Address',
                               style: TextStyle(
@@ -212,6 +252,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
+
                             TextField(
                               controller: _emailController,
                               decoration: InputDecoration(
@@ -227,6 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 4),
                             const Text(
                               'Use your registered email domain.',
@@ -235,7 +277,12 @@ class _LoginPageState extends State<LoginPage> {
                                 color: Colors.grey,
                               ),
                             ),
+
                             const SizedBox(height: 24),
+
+                            // -----------------------------------------
+                            // 🔐 INPUT PASSWORD
+                            // -----------------------------------------
                             const Text(
                               'Password',
                               style: TextStyle(
@@ -245,6 +292,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
+
                             TextField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
@@ -259,6 +307,8 @@ class _LoginPageState extends State<LoginPage> {
                                   horizontal: 20,
                                   vertical: 16,
                                 ),
+
+                                // Icon untuk show/hide password
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword
@@ -274,7 +324,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 8),
+
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -285,6 +337,8 @@ class _LoginPageState extends State<LoginPage> {
                                     color: Colors.grey,
                                   ),
                                 ),
+
+                                // Tombol lupa password
                                 TextButton(
                                   onPressed: () {},
                                   child: const Text(
@@ -298,11 +352,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 32),
 
-                            // -----------------------------------
-                            // 🔥 LOGIN BUTTON (PAKE API)
-                            // -----------------------------------
+                            // -----------------------------------------
+                            // 🟧 LOGIN BUTTON
+                            // -----------------------------------------
                             ElevatedButton(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
@@ -313,6 +368,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 elevation: 0,
                               ),
+
+                              // Menampilkan loading saat login
                               child: _isLoading
                                   ? const SizedBox(
                                 height: 20,

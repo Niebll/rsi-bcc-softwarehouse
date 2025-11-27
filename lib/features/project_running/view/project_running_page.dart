@@ -15,18 +15,23 @@ class ProjectRunningPage extends StatefulWidget {
 }
 
 class _ProjectRunningPageState extends State<ProjectRunningPage> {
+  // List untuk menampung data project dari API
   List<dynamic> _projects = [];
+
+  // indikator loading, default true saat pertama kali buka halaman
   bool _isLoading = true;
 
+  // Base URL untuk GET project
   final String baseUrl =
-      "https://pg-vincent.bccdev.id/rsi/api/project/"; // <--- GANTI DI SINI
+      "https://pg-vincent.bccdev.id/rsi/api/project/";
 
   @override
   void initState() {
     super.initState();
-    fetchProjects();
+    fetchProjects(); // Fetch data pertama kali
   }
 
+  // Fungsi mengambil data project dari API
   Future<void> fetchProjects() async {
     try {
       final res = await http.get(Uri.parse(baseUrl));
@@ -35,7 +40,7 @@ class _ProjectRunningPageState extends State<ProjectRunningPage> {
         final data = jsonDecode(res.body);
 
         setState(() {
-          _projects = data["data"];   // <-- FIX DI SINI
+          _projects = data["data"]; // Data project berasal dari key "data"
           _isLoading = false;
         });
 
@@ -56,7 +61,10 @@ class _ProjectRunningPageState extends State<ProjectRunningPage> {
       backgroundColor: AppColors.background,
       body: Row(
         children: [
+          // Sidebar kiri
           SideDashboard(selectedIndex: 0, onItemSelected: (_) {}),
+
+          // Area konten utama
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.w),
@@ -65,6 +73,7 @@ class _ProjectRunningPageState extends State<ProjectRunningPage> {
                 children: [
                   SizedBox(height: 40.h),
 
+                  // Judul halaman
                   Text(
                     'Daftar Project Berjalan',
                     style: Theme.of(context).textTheme.headlineMedium,
@@ -72,65 +81,77 @@ class _ProjectRunningPageState extends State<ProjectRunningPage> {
 
                   SizedBox(height: 40.h),
 
+                  // Jika masih loading → tampilkan spinner
                   _isLoading
                       ? const Center(child: CircularProgressIndicator())
+
+                  // Jika tidak loading → tampilkan konten
                       : Expanded(
-                          child: _projects.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    "Belum ada project berjalan.",
-                                    style: TextStyle(fontSize: 18),
+                    child: _projects.isEmpty
+                    // Jika tidak ada data di API
+                        ? const Center(
+                      child: Text(
+                        "Belum ada project berjalan.",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    )
+
+                    // Jika ada data → tampilkan dalam bentuk Grid
+                        : GridView.builder(
+                      itemCount: _projects.length,
+                      gridDelegate:
+                      SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, // grid 2 kolom
+                        mainAxisSpacing: 0.h,
+                        crossAxisSpacing: 20.w,
+                        childAspectRatio: 1.8, // bentuk card
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = _projects[index];
+
+                        // Ambil field dari API
+                        final title = item["name"] ?? "-";
+                        final client =
+                            "Request ID: ${item["requestId"]}";
+                        final log =
+                        (item["progressList"] as List).isEmpty
+                            ? "Belum ada progress"
+                            : "${item["progressList"].length} progress update";
+
+                        // Widget card project
+                        return ProjectRunningBoxWidgets(
+                          titleProject: title,
+                          client: client,
+                          log: log,
+                          onTap: () {
+                            // Buka dialog detail project
+                            showGeneralDialog(
+                              context: context,
+                              pageBuilder:
+                                  (context, anim1, anim2) {
+                                return ProjectRunningDetail(
+                                  project: item,
+                                );
+                              },
+                              transitionBuilder: (context, anim1,
+                                  anim2, child) {
+                                return FadeTransition(
+                                  opacity: anim1,
+                                  child: ScaleTransition(
+                                    scale: CurvedAnimation(
+                                      parent: anim1,
+                                      curve: Curves.easeOut,
+                                    ),
+                                    child: child,
                                   ),
-                                )
-                              : GridView.builder(
-                                  itemCount: _projects.length,
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 0.h,
-                                        crossAxisSpacing: 20.w,
-                                        childAspectRatio: 1.8,
-                                      ),
-                                  itemBuilder: (context, index) {
-                                    final item = _projects[index];
-
-                                    final title = item["name"] ?? "-";
-                                    final client =
-                                        "Request ID: ${item["requestId"]}";
-                                    final log =
-                                        (item["progressList"] as List).isEmpty
-                                        ? "Belum ada progress"
-                                        : "${item["progressList"].length} progress update";
-
-                                    return ProjectRunningBoxWidgets(
-                                      titleProject: title,
-                                      client: client,
-                                      log: log,
-                                      onTap: () {
-                                        showGeneralDialog(
-                                          context: context,
-                                          pageBuilder: (context, anim1, anim2) {
-                                            return ProjectRunningDetail(project: item,);
-                                          },
-                                          transitionBuilder: (context, anim1, anim2, child) {
-                                            return FadeTransition(
-                                              opacity: anim1,
-                                              child: ScaleTransition(
-                                                scale: CurvedAnimation(
-                                                  parent: anim1,
-                                                  curve: Curves.easeOut,
-                                                ),
-                                                child: child,
-                                              ),
-                                            );
-                                          },
-                                        );
-
-                                      },
-                                    );
-                                  },
-                                ),
-                        ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),

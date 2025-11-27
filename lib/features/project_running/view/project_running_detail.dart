@@ -8,8 +8,9 @@ import 'package:http/http.dart' as http;
 import '../widgets/assign_member_modal.dart';
 import '../widgets/member_model.dart';
 
+// Halaman detail project yang muncul sebagai dialog
 class ProjectRunningDetail extends StatefulWidget {
-  final Map<String, dynamic> project;
+  final Map<String, dynamic> project; // data project yang dikirim dari halaman sebelumnya
   const ProjectRunningDetail({super.key, required this.project});
 
   @override
@@ -19,19 +20,20 @@ class ProjectRunningDetail extends StatefulWidget {
 class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     with SingleTickerProviderStateMixin {
 
-  late TabController tabController;
+  late TabController tabController; // controller untuk tabbar
 
-  List<Map<String, dynamic>> logs = [];
-  bool loadingLogs = true;
+  List<Map<String, dynamic>> logs = []; // menyimpan riwayat progress
+  bool loadingLogs = true; // indikator loading riwayat
 
+  // controller input form progress baru
   final TextEditingController progressTitle = TextEditingController();
   final TextEditingController progressDesc = TextEditingController();
-  String statusDropdown = "on Progress";
 
-  bool isSubmitting = false;
+  String statusDropdown = "on Progress"; // default status progress
+  bool isSubmitting = false; // loading ketika tekan tombol simpan
 
-  List<Member> assignedMembers = [];
-  bool loadingMembers = true;
+  List<Member> assignedMembers = []; // list member yang sudah diassign
+  bool loadingMembers = true; // loading indikator fetch member
 
   final String baseUrl = "https://pg-vincent.bccdev.id/rsi/api/project/";
 
@@ -39,22 +41,26 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
   void initState() {
     super.initState();
 
+    // Tab berisi 2 halaman
     tabController = TabController(length: 2, vsync: this);
 
+    // Listener supaya saat pindah tab, data direload sesuai tab
     tabController.addListener(() {
       if (!tabController.indexIsChanging) {
         if (tabController.index == 0) {
-          loadExistingLogs();
+          loadExistingLogs(); // Tab riwayat
         } else if (tabController.index == 1) {
-          fetchAssignedMembers();
+          fetchAssignedMembers(); // Tab assign member
         }
       }
     });
 
+    // Load awal
     loadExistingLogs();
     fetchAssignedMembers();
   }
 
+  // Mengambil progressList dari project lalu konversi ke format log
   void loadExistingLogs() {
     logs = (widget.project["progressList"] as List)
         .map((e) => {
@@ -64,11 +70,12 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     })
         .toList()
         .reversed
-        .toList();
+        .toList(); // dibalik supaya terbaru di atas
 
     setState(() => loadingLogs = false);
   }
 
+  // Fetch member yang sudah diassign ke project
   Future<void> fetchAssignedMembers() async {
     final projectId = widget.project['id'];
     final url =
@@ -80,6 +87,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
 
+        // Mapping JSON → Model Member
         assignedMembers = data.map((e) {
           return Member(
             e["id"],
@@ -98,10 +106,12 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     setState(() => loadingMembers = false);
   }
 
+  // Update progress ke API
   Future<void> updateProgress() async {
     final title = progressTitle.text.trim();
     final desc = progressDesc.text.trim();
 
+    // Validasi
     if (title.isEmpty || desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Semua field harus diisi")),
@@ -121,9 +131,11 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
         body: jsonEncode(body),
       );
 
+      // 201 = Created
       if (res.statusCode == 201) {
         final data = jsonDecode(res.body);
 
+        // Tambahkan progress baru ke list log lokal
         logs.insert(0, {
           "id": data["id"],
           "tanggal": DateTime.now(),
@@ -152,6 +164,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     setState(() => isSubmitting = false);
   }
 
+  // Modal assign member
   void openAssignMemberModal() async {
     final result = await showDialog<List<Member>>(
       context: context,
@@ -162,13 +175,14 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
       ),
     );
 
+    // Jika modal mengembalikan hasil
     if (result != null) {
       setState(() {
         assignedMembers = result;
       });
     }
 
-    fetchAssignedMembers(); // refresh setelah modal
+    fetchAssignedMembers(); // refresh ulang
   }
 
   @override
@@ -180,7 +194,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     return Align(
       alignment: Alignment.center,
       child: Material(
-        color: Colors.transparent,
+        color: Colors.transparent, // supaya background dialog transparan
         child: Container(
           margin: EdgeInsets.symmetric(
               horizontal: horizontalMargin, vertical: 68.h),
@@ -200,6 +214,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
           ),
           child: Column(
             children: [
+              // Header dialog
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -211,8 +226,10 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
                       icon: const Icon(Icons.close))
                 ],
               ),
+
               SizedBox(height: 16.h),
 
+              // Tab bar
               Container(
                 decoration: BoxDecoration(
                     color: Colors.grey.shade50,
@@ -230,12 +247,13 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
 
               SizedBox(height: 14.h),
 
+              // Isi tab bar
               Expanded(
                   child: TabBarView(
                     controller: tabController,
                     children: [
-                      _buildLogTab(text),
-                      _buildAssignMember(text),
+                      _buildLogTab(text), // Tab log progress
+                      _buildAssignMember(text), // Tab assign member
                     ],
                   )),
             ],
@@ -245,6 +263,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     );
   }
 
+  // TAB 1 — Riwayat progress dan form tambah progress
   Widget _buildLogTab(TextTheme text) {
     return Column(
       children: [
@@ -261,10 +280,14 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
             source: _LogSource(logs),
           ),
         ),
+
+        // FORM TAMBAH PROGRESS
         SizedBox(height: 12),
         Text("Tambah Progress Baru",
             style: text.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         SizedBox(height: 10),
+
+        // Input judul
         TextField(
           controller: progressTitle,
           decoration: const InputDecoration(
@@ -272,6 +295,8 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
               hintText: "Judul progress (ex: Slicing Register)"),
         ),
         SizedBox(height: 10),
+
+        // Input deskripsi
         TextField(
           controller: progressDesc,
           maxLines: 3,
@@ -279,6 +304,8 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
               border: OutlineInputBorder(), hintText: "Deskripsi progress"),
         ),
         SizedBox(height: 10),
+
+        // Dropdown status
         DropdownButtonFormField<String>(
           value: statusDropdown,
           items: const [
@@ -288,7 +315,10 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
           onChanged: (v) => setState(() => statusDropdown = v!),
           decoration: const InputDecoration(border: OutlineInputBorder()),
         ),
+
         SizedBox(height: 12),
+
+        // Tombol submit
         Align(
           alignment: Alignment.centerRight,
           child: ElevatedButton(
@@ -306,11 +336,14 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
     );
   }
 
+  // TAB 2 — List member + tombol tambah member
   Widget _buildAssignMember(TextTheme textTheme) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
+          // Tombol untuk membuka modal assign member
           GestureDetector(
             onTap: openAssignMemberModal,
             child: Container(
@@ -332,6 +365,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
           ),
           const SizedBox(height: 20),
 
+          // Title
           Text("Assigned Members",
               style:
               textTheme.titleMedium!.copyWith(fontWeight: FontWeight.w600)),
@@ -344,14 +378,17 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
             Text("Belum ada member yang diassign",
                 style: textTheme.bodyMedium!.copyWith(color: Colors.grey)),
 
+          // Tampilkan list member
           if (!loadingMembers)
             ...assignedMembers.map(
                   (m) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
-                    CircleAvatar(child: Text(m.name[0])),
+                    CircleAvatar(child: Text(m.name[0])), // avatar huruf awal
                     const SizedBox(width: 12),
+
+                    // Detail member
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -374,6 +411,7 @@ class _ProjectRunningDetailState extends State<ProjectRunningDetail>
   }
 }
 
+// DataSource untuk tabel log progress
 class _LogSource extends DataTableSource {
   final List<Map<String, dynamic>> logs;
   _LogSource(this.logs);
@@ -381,7 +419,8 @@ class _LogSource extends DataTableSource {
   @override
   DataRow? getRow(int index) {
     if (index >= logs.length) return null;
-    final df = DateFormat("dd MMM yyyy HH:mm");
+
+    final df = DateFormat("dd MMM yyyy HH:mm"); // format tanggal
 
     return DataRow(cells: [
       DataCell(Text(logs[index]["id"].toString())),
