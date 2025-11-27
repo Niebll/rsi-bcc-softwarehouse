@@ -76,14 +76,14 @@ class _SideDashboardState extends State<SideDashboard> {
                   isCollapsed: _isCollapsed,
                   onTap: () => context.go('/dashboard'),
                 ),
-                SidebarItem(
-                  icon: Icons.file_open,
-                  isActive:
-                      GoRouterState.of(context).uri.toString() == '/portofolio',
-                  title: "Portofolio",
-                  isCollapsed: _isCollapsed,
-                  onTap: () => context.go('/portofolio'),
-                ),
+                // SidebarItem(
+                //   icon: Icons.file_open,
+                //   isActive:
+                //       GoRouterState.of(context).uri.toString() == '/portofolio',
+                //   title: "Portofolio",
+                //   isCollapsed: _isCollapsed,
+                //   onTap: () => context.go('/portofolio'),
+                // ),
                 SidebarItem(
                   icon: Icons.circle_outlined,
                   title: "Progress",
@@ -93,7 +93,7 @@ class _SideDashboardState extends State<SideDashboard> {
                   onTap: () => context.go('/projects/running'),
                 ),
                 SidebarItem(
-                  icon: Icons.payment,
+                  icon: Icons.analytics,
                   title: "Analytics",
                   isActive:
                       GoRouterState.of(context).uri.toString() == '/analytics',
@@ -102,13 +102,29 @@ class _SideDashboardState extends State<SideDashboard> {
                 ),
                 SidebarItem(
                   icon: Icons.add_card_outlined,
-                  title: "Billing",
+                  title: "Payment",
                   isActive:
                   GoRouterState.of(context).uri.toString() == '/projects/billing',
                   isCollapsed: _isCollapsed,
                   onTap: () => context.go('/projects/billing'),
                 ),
-
+                SidebarItem(
+                  icon: Icons.queue,
+                  title: "Requesting",
+                  isActive:
+                  GoRouterState.of(context).uri.toString() == '/requesting',
+                  isCollapsed: _isCollapsed,
+                  onTap: () => context.go('/requesting'),
+                ),
+                Spacer(),
+                SidebarItem(
+                  icon: Icons.logout,
+                  title: "Logout",
+                  isActive:
+                  GoRouterState.of(context).uri.toString() == '/logout',
+                  isCollapsed: _isCollapsed,
+                  onTap: () => context.go('/login'),
+                ),
               ],
             ),
           ),

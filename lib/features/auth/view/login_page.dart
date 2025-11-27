@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:bcc_rsi/features/auth/view/register_page.dart';
+import 'package:bcc_rsi/features/home/view/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_font_weight.dart';
@@ -15,8 +19,62 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  // ---------------------------
+  // 🔥 LOGIN FUNCTION
+  // ---------------------------
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email dan password tidak boleh kosong")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final url = "https://pg-vincent.bccdev.id/rsi/api/auth/login";
+
+    try {
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
+      );
+
+      final data = jsonDecode(res.body);
+
+      if (res.statusCode == 200 && data["token"] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["message"] ?? "Login berhasil")),
+        );
+
+        print("TOKEN: ${data['token']}");
+
+        context.go('/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["message"] ?? "Login gagal")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  // ---------------------------
+  // UI TETAP — GA DIUBAH
+  // ---------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                             alignment: Alignment.topLeft,
                             child: Row(
                               children: [
-                                Image.asset('assets/images/BCC.png', width: 200,)
+                                Image.asset('assets/images/BCC.png', width: 200),
                               ],
                             ),
                           ),
@@ -59,7 +117,9 @@ class _LoginPageState extends State<LoginPage> {
                         Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Image.asset(
-                            'assets/images/Login.png', width: constraints.maxWidth * 0.3,
+                            'assets/images/Login.png',
+                            width: 400,
+
                           ),
                         ),
                         const Spacer(),
@@ -101,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Image.asset('assets/images/BCC.png', width: 200,),
+                                    Image.asset('assets/images/BCC.png', width: 200),
                                   ],
                                 ),
                               ),
@@ -161,7 +221,6 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                hintText: '',
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 16,
@@ -196,7 +255,6 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
-                                hintText: '',
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 16,
@@ -241,8 +299,12 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                             const SizedBox(height: 32),
+
+                            // -----------------------------------
+                            // 🔥 LOGIN BUTTON (PAKE API)
+                            // -----------------------------------
                             ElevatedButton(
-                              onPressed: () {},
+                              onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFF7043),
                                 padding: const EdgeInsets.symmetric(vertical: 18),
@@ -251,7 +313,16 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 elevation: 0,
                               ),
-                              child: const Text(
+                              child: _isLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                                  : const Text(
                                 'Login',
                                 style: TextStyle(
                                   fontSize: 16,
@@ -260,68 +331,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 32),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: Colors.grey.shade300,
-                                    thickness: 1,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text(
-                                    'OR',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade500,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: Colors.grey.shade300,
-                                    thickness: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 32),
-                            Center(
-                              child: RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                  children: [
-                                    const TextSpan(text: "Don't have "),
-                                    WidgetSpan(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                const RegisterPage(),
-                                              )
-                                          );
-                                        },
-                                        child: const Text(
-                                          'the account yet?',
-                                          style: TextStyle(
-                                            color: Color(0xFF00BCD4),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),

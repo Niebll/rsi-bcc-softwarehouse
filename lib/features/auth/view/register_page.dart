@@ -1,6 +1,9 @@
 import 'package:bcc_rsi/features/auth/view/login_page.dart';
+import 'package:bcc_rsi/features/project_request/view/project_request_user.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_font_weight.dart';
@@ -18,6 +21,72 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  // ============================
+  //       REGISTER FUNCTION
+  // ============================
+  Future<void> registerUser() async {
+
+    // VALIDATION
+    if (_nameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty ||
+        _rePasswordController.text.trim().isEmpty) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All fields must be filled")),
+      );
+      return;
+    }
+
+    if (_passwordController.text.trim() != _rePasswordController.text.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password does not match")),
+      );
+      return;
+    }
+
+    final url = Uri.parse(
+        "https://pg-vincent.bccdev.id/rsi/api/auth/register");
+
+    final body = {
+      "name": _nameController.text.trim(),
+      "email": _emailController.text.trim(),
+      "password": _passwordController.text.trim(),
+      "phone": "081286863129" // HARD CODE
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // sukses
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Register success!")),
+        );
+        context.go('/requesting');
+
+    } else {
+        // gagal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Register failed: ${response.body}"),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +120,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             alignment: Alignment.topLeft,
                             child: Row(
                               children: [
-                                Image.asset('assets/images/BCC.png', width: 200,)
+                                Image.asset('assets/images/BCC.png', width: 200)
                               ],
                             ),
                           ),
@@ -60,7 +129,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Image.asset(
-                            'assets/images/Login.png', width: constraints.maxWidth * 0.3,
+                            'assets/images/Login.png',
+                            width: 400,
                           ),
                         ),
                         const Spacer(),
@@ -102,7 +172,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Image.asset('assets/images/BCC.png', width: 200,),
+                                    Image.asset('assets/images/BCC.png',
+                                        width: 200),
                                   ],
                                 ),
                               ),
@@ -135,6 +206,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             const SizedBox(height: 40),
+
+                            // NAME
                             const Text(
                               'Full Name',
                               style: TextStyle(
@@ -161,6 +234,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
+
+                            // EMAIL
                             const Text(
                               'Email Address',
                               style: TextStyle(
@@ -187,6 +262,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
+
+                            // PASSWORD
                             const Text(
                               'Password',
                               style: TextStyle(
@@ -227,6 +304,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
+
+                            // CONFIRM PASSWORD
                             const Text(
                               'Confirm Password',
                               style: TextStyle(
@@ -267,11 +346,16 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             const SizedBox(height: 32),
+
+                            // REGISTER BUTTON
                             ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                registerUser();
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFF7043),
-                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                padding:
+                                const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -286,7 +370,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 32),
+
                             Row(
                               children: [
                                 Expanded(
@@ -296,7 +382,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
                                   child: Text(
                                     'OR',
                                     style: TextStyle(
@@ -329,7 +416,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => const LoginPage(),
+                                              builder: (context) =>
+                                              const LoginPage(),
                                             ),
                                           );
                                         },

@@ -7,13 +7,14 @@ import '../../../core/themes/app_font_weight.dart';
 
 class ProjectRunningBoxWidgets extends StatelessWidget {
   final String titleProject, client, log;
+  final VoidCallback? onTap;
 
   const ProjectRunningBoxWidgets({
-    Key? key,
+    super.key,
     required this.titleProject,
     required this.client,
-    required this.log,
-  }) : super(key: key);
+    required this.log, this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,9 @@ class ProjectRunningBoxWidgets extends StatelessWidget {
                   fontSize: 24.sp,
                   fontWeight: AppFontWeight.semiBold,
                   color: Colors.black,
+
                 ),
+                maxLines: 1,
               ),
               SizedBox(height: 4.h),
               Text(
@@ -95,26 +98,25 @@ class ProjectRunningBoxWidgets extends StatelessWidget {
             ],
           ),
           child: GestureDetector(
-            onTap: () {
-              showGeneralDialog(
-                context: context,
-                pageBuilder: (context, anim1, anim2) {
-                  return ProjectRunningDetail();
-                },
-                transitionBuilder: (context, anim1, anim2, child) {
-                  return FadeTransition(
-                    opacity: anim1,
-                    child: ScaleTransition(
-                      scale: CurvedAnimation(
-                        parent: anim1,
-                        curve: Curves.easeOut,
-                      ),
-                      child: child,
-                    ),
-                  );
-                },
-              );
-            },
+            onTap: onTap,
+              // showGeneralDialog(
+              //   context: context,
+              //   pageBuilder: (context, anim1, anim2) {
+              //     return ProjectRunningDetail();
+              //   },
+              //   transitionBuilder: (context, anim1, anim2, child) {
+              //     return FadeTransition(
+              //       opacity: anim1,
+              //       child: ScaleTransition(
+              //         scale: CurvedAnimation(
+              //           parent: anim1,
+              //           curve: Curves.easeOut,
+              //         ),
+              //         child: child,
+              //       ),
+              //     );
+              //   },
+              // );
 
             child: Container(
               width: double.infinity,

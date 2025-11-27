@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'package:bcc_rsi/core/themes/app_colors.dart';
 import 'package:bcc_rsi/core/themes/app_font_weight.dart';
 import 'package:bcc_rsi/features/project_request/widgets/project_request_detail_box.dart';
 import 'package:checkbox_grouped/checkbox_grouped.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class ProjectRequestDetail extends StatefulWidget {
   final Map<String, dynamic> project;
@@ -16,31 +17,56 @@ class ProjectRequestDetail extends StatefulWidget {
 
 class _ProjectRequestDetailState extends State<ProjectRequestDetail> {
   late GroupController _controller;
-  bool _controllerReady = false;
+  List<int> _selectedValues = [];
 
   @override
   void initState() {
     super.initState();
     _controller = GroupController(isMultipleSelection: true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _controllerReady = true;
-      });
-    });
+  }
+
+  Future<void> _submitDecision(String decision) async {
+    final String baseUrl = "https://pg-vincent.bccdev.id/rsi/"; // <- ISI DI SINI
+    final url = Uri.parse("${baseUrl}api/analysis/analyze");
+
+    final body = {
+      "requestId": widget.project["id"] ?? 0,
+      "analysis_notes": "",
+      "analyzed_by": 1,
+      "decision": decision,
+    };
+    try {
+      final res = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        Navigator.pop(context); // Tutup modal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Berhasil di$decision")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal: ${res.body}")),
+        );
+        print("Response status: ${res.statusCode}");
+        print("Response body: ${res.body}");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme
-        .of(context)
-        .textTheme;
-    final dateFormat = DateFormat('dd MMM yyyy');
-    final selectedCount = _controllerReady
-        ? _controller.selectedItem.length
-        : 0;
+    final data = widget.project;
+    final textTheme = Theme.of(context).textTheme;
 
-    final isAllChecked = selectedCount == 3;
-
+    final isAllChecked = _selectedValues.length == 3;
 
     return Align(
       alignment: Alignment.center,
@@ -64,12 +90,11 @@ class _ProjectRequestDetailState extends State<ProjectRequestDetail> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              /// HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    // project['project'],
                     "Detail Project Request",
                     style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -82,127 +107,83 @@ class _ProjectRequestDetailState extends State<ProjectRequestDetail> {
                   ),
                 ],
               ),
-              // Detail Info
+
               SizedBox(height: 16.h),
+
+              /// DATA DETAIL
               ProjectRequestDetailBox(
-                  title: "Project", description: widget.project['project']),
-              SizedBox(height: 12.h),
-              ProjectRequestDetailBox(title: "Perusahaan",
-                  description: widget.project['perusahaan']),
-              SizedBox(height: 12.h),
-              Text("Deskripsi", style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: AppFontWeight.medium, fontSize: 20.sp)),
-              Row(
-                children: [
-                  // === Tenggat ===
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Tenggat",
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16.sp,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: AppColors.greyText),
-                          ),
-                          child: Text(
-                            widget.project['tenggat'] ?? '-',
-                            style: textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(width: 16.w),
-
-                  // === Budget ===
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Budget",
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16.sp,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: AppColors.greyText),
-                          ),
-                          child: Text(
-                            "Rp ${widget.project['budget']?.toString() ?? '-'}",
-                            style: textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                title: "Project",
+                description: data["project"] ?? "-",
               ),
               SizedBox(height: 12.h),
-              ProjectRequestDetailBox(title: "Detail", description: ""),
+
+              ProjectRequestDetailBox(
+                title: "Client",
+                description: data["client"] ?? "-",
+              ),
+              SizedBox(height: 12.h),
+
+              ProjectRequestDetailBox(
+                title: "Deadline",
+                description: data["deadline"] ?? "-",
+              ),
+              SizedBox(height: 12.h),
+
+              ProjectRequestDetailBox(
+                title: "Budget",
+                description: "Rp ${data['budget'] ?? '-'}",
+              ),
+
+              SizedBox(height: 24.h),
+
+              Text(
+                "Kecocokan Project:",
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: AppFontWeight.medium,
+                  fontSize: 20.sp,
+                ),
+              ),
               SizedBox(height: 8.h),
-              Text("Kecocokan Project:", style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: AppFontWeight.medium, fontSize: 20.sp)),
-              SizedBox(height: 8.h),
+
+              /// CHECKLIST
               SimpleGroupedChips<int>(
                 controller: _controller,
-                values: [1, 2, 3],
+                values: const [1, 2, 3],
+                itemsTitle: [
+                  "Tenggat: ${data['deadline'] ?? '-'}",
+                  "Budget: Rp ${data['budget'] ?? '-'}",
+                  "Resource: - ",
+                ],
                 chipGroupStyle: ChipGroupStyle.minimize(
                   selectedTextColor: Colors.white,
                   backgroundColorItem: Colors.white,
                   selectedColorItem: AppColors.secondary,
                   itemTitleStyle: textTheme.bodyMedium!.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
                   ),
                   selectedIcon: Icons.check_circle,
-
                 ),
                 onItemSelected: (values) {
                   setState(() {
-                    final selectedCount = values.length; // langsung dari parameter
-                    final isAllChecked = selectedCount == 3;
-                    debugPrint("Selected Count: $selectedCount | All checked: $isAllChecked");
+                    _selectedValues = List<int>.from(values);
                   });
                 },
-                itemsTitle: [
-                  "Tenggat: ${widget.project['tenggat'] ?? '-'}",
-                  "Budget: Rp ${widget.project['budget']?.toString() ?? '-'}",
-                  "Resource: ${widget.project['resource'] ?? '-'}",
-                ],
               ),
+
               const Spacer(),
+
+              /// BUTTONS
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Reject
+                  /// REJECT
                   ElevatedButton(
-                    onPressed: () {
-                      // TODO: logic reject di sini
-                      
-                    },
+                    onPressed: () => _submitDecision("Rejected"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 32.w, vertical: 14.h),
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -211,27 +192,24 @@ class _ProjectRequestDetailState extends State<ProjectRequestDetail> {
                       "Reject",
                       style: textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white
                       ),
                     ),
                   ),
+
                   SizedBox(width: 16.w),
 
-                  // Approve
+                  /// APPROVE
                   ElevatedButton(
                     onPressed: isAllChecked
-                        ? () {
-                      // TODO: logic approve di sini
-                    }
+                        ? () => _submitDecision("Approved")
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isAllChecked
-                          ? AppColors.secondary
-                          : Colors.grey.shade300,
+                      backgroundColor:
+                      isAllChecked ? AppColors.secondary : Colors.grey.shade300,
                       foregroundColor:
                       isAllChecked ? Colors.white : Colors.grey.shade600,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 32.w, vertical: 14.h),
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -253,4 +231,3 @@ class _ProjectRequestDetailState extends State<ProjectRequestDetail> {
     );
   }
 }
-
