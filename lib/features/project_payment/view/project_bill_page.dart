@@ -10,14 +10,14 @@ import 'package:http/http.dart' as http;
 // Base URL API utama
 const String BaseUrl = "https://pg-vincent.bccdev.id/rsi/";
 
-class ProjectBillPage extends StatefulWidget {
-  const ProjectBillPage({Key? key}) : super(key: key);
+class ProjectPaymentPage extends StatefulWidget {
+  const ProjectPaymentPage({Key? key}) : super(key: key);
 
   @override
-  State<ProjectBillPage> createState() => _ProjectBillPageState();
+  State<ProjectPaymentPage> createState() => _ProjectPaymentPageState();
 }
 
-class _ProjectBillPageState extends State<ProjectBillPage> {
+class _ProjectPaymentPageState extends State<ProjectPaymentPage> {
   int _selectedIndex = 0;        // index sidebar
   int currentTabIndex = 0;       // index tab (Pending / Verified / Rejected)
 

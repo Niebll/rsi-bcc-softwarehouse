@@ -1,7 +1,7 @@
 import 'package:bcc_rsi/features/auth/view/login_page.dart';
 import 'package:bcc_rsi/features/auth/view/register_page.dart';
 import 'package:bcc_rsi/features/portofolio/view/portofolio_page.dart';
-import 'package:bcc_rsi/features/project_bill/view/project_bill_page.dart';
+import 'package:bcc_rsi/features/project_payment/view/project_bill_page.dart';
 import 'package:bcc_rsi/features/project_request/view/project_request_page.dart';
 import 'package:bcc_rsi/features/project_request/view/project_request_user.dart';
 import 'package:bcc_rsi/features/project_running/view/project_running_page.dart';
@@ -42,7 +42,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/projects/billing',
-      builder: (context, state) => const ProjectBillPage(),
+      builder: (context, state) => const ProjectPaymentPage(),
     ),
     GoRoute(
       path: '/portofolio',
