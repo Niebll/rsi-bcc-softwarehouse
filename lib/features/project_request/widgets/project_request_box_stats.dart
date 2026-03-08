@@ -7,11 +7,15 @@ class ProjectRequestBoxStats extends StatelessWidget {
   final String title, count, iconPath;
   final Color bgColor;
 
-  const ProjectRequestBoxStats({Key? key, required this.title, required this.count, required this.iconPath, required this.bgColor}) : super(key: key);
+  const ProjectRequestBoxStats(
+      {Key? key, required this.title, required this.count, required this.iconPath, required this.bgColor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    TextTheme textTheme = Theme.of(context).textTheme;
+    TextTheme textTheme = Theme
+        .of(context)
+        .textTheme;
     return Expanded(
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 50.w, horizontal: 24.w),
